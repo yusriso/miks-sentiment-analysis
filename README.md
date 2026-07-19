@@ -29,10 +29,6 @@ Full analysis with all code and charts: [`miks_sentiment_analysis.ipynb`](./miks
 │   └── threads_metadata.csv               <- original post text per thread (context, not scored)
 │
 ├── scripts/
-│   ├── parse_comments.py                  <- Reddit parser, markdown-link username format
-│   ├── parse_comments_v2.py               <- Reddit parser, avatar/flair/badge format
-│   ├── parse_comments_v3.py               <- Reddit parser, OP-marker/hashtag-flair format
-│   ├── parse_youtube_comments.py          <- YouTube @username/timestamp/body/likes format
 │   ├── vader_sentiment_scoring.py         <- standalone VADER scorer
 │   ├── train_logreg_classifier.py         <- trains + cross-validates the LogReg model
 │   ├── score_with_logreg.py               <- applies the trained model to new comments
@@ -75,7 +71,7 @@ python scripts/score_with_logreg.py data/combined_comments.csv output.csv
 python scripts/evaluate_gold_set.py data/gold_set_v2_full_comparison.csv
 ```
 
-The Reddit/YouTube parsers (`parse_comments*.py`) were used to turn raw copy-pasted comment threads into structured CSVs during data collection. They're included for transparency but aren't needed to reproduce the analysis, the already-parsed output is `data/combined_comments.csv`.
+The Reddit/YouTube comments in `data/combined_comments.csv` were manually collected and compiled into a consistent schema (thread, platform, username, timestamp, comment text, score) across four different source formats. The raw collection/parsing step isn't included as runnable code here, `combined_comments.csv` is the resulting structured dataset the rest of the pipeline operates on.
 
 ---
 
