@@ -22,7 +22,7 @@ The takeaway: a general-purpose, off-the-shelf sentiment tool is close to useles
 
 Sentiment analysis projects often stop at "run VADER, report percent positive/negative." That's fine for generic text, but gaming communities write in a register that's dense with slang, sarcasm, and domain-specific shorthand ("mid," "ass," "trash,") that a general-purpose lexicon was never built to understand. I wanted to actually measure how much that gap matters, rather than assume it.
 
-Miks turned out to be a good test case: he's a genuinely controversial agent (the community is split on whether he's "balanced but boring" or "underpowered", and the sentiment isn't a simple positive/negative binary), and there's a lot of organic discussion to pull from across multiple platforms and a few months of time.
+Miks turned out to be a good test case: he's a pretty controversial agent (the community is split on whether he's "balanced but boring" or "underpowered", and the sentiment isn't a simple positive/negative binary), and there's a lot of organic discussion to pull from across multiple platforms and a few months of time.
 
 ---
 
@@ -70,7 +70,7 @@ VADER (Valence Aware Dictionary and sEntiment Reasoner) requires no training, ju
 
 ## Method 2: TF-IDF + Logistic Regression
 
-A real, trainable classifier learned from the 236 labeled comments. Given how small that labeled set is, especially the 23-example Mixed class, I used **5-fold stratified cross-validation** instead of a single train/test split. A single split would have given an accuracy number that swung heavily depending on luck of the draw (per-fold accuracy in this run ranged from 44.7% to 63.8%, a 19-point spread on the same data and same model).
+Pairing Term Frequency and Inverse Document Frequency with a logistic regression was the next logical step. Term Frequency measures how much a word shows up in a single comment whereas inverse document frequency measures how rare a word is throughout all of the comments in the dataset. By multing them together we get a score for each word and comment making it easier to tell comments apart. This is trainable classifier learned from the 236 labeled comments. Given how small that labeled set is, especially the 23-example Mixed class, I used **5-fold stratified cross-validation** instead of a single train/test split. Through this stratified cross validation we split our gold set five ways and use fold 1 to predict folds 2 through 5. Then we use fold 2 to predict 1,3,4,5 and so on. A single split would have given an accuracy number that swung heavily depending on luck of the draw (per-fold accuracy in this run ranged from 44.7% to 63.8%, a 19-point spread on the same data and same model).
 
 **Results:**
 - **56.4% accuracy** (62.4% excluding Mixed)
@@ -101,6 +101,39 @@ Using the trained LogReg model to score all 698 comments:
 **By time period:** comments cluster into three rough windows (Launch ~3-4 months ago, Mid ~1-2 months ago, Recent <1 month ago). Positive sentiment peaks in the Mid period (~29%, vs. ~13% at Launch and ~12% Recent), largely because that window is dominated by ranked players sharing personal "I actually enjoy playing him" takes, a different register than the Launch reveal-reaction threads or the Recent design-critique thread. This is a real pattern in the data, but it reflects *what kind of thread was happening when* more than a clean sentiment trend over the agent's lifecycle. I'm not claiming a causal time trend here, just noting the composition shift.
 
 **Engagement vs. sentiment (Reddit only):** the most-upvoted comments skew more negative than the average comment. Comments in the top 10% by score are 34.6% Negative, compared to 25.6% Negative across all Reddit comments; Mixed and nuanced takes are underrepresented in the top-voted tier (3.8% vs. 7.4%). A Kruskal-Wallis test confirms comment-score distributions differ significantly across sentiment groups (H=17.8, p=0.0005), with Negative comments having the highest median score (4.5) and Mixed the lowest (1.5). In plain terms: critical, punchy takes get amplified by upvotes more than nuanced ones do, so "what the community sees most" skews more negative than "the full spread of what the community actually said."
+
+---
+
+## Precision & Recall: Where Accuracy Alone Hides the Real Story
+
+Accuracy tells you how often a method is right overall, but it doesn't say *how* it's wrong. Precision (of everything a method labeled X, how much actually was X) and recall (of everything actually X, how much did the method catch) expose that.
+
+**Macro-averaged across all 4 classes (Positive/Negative/Neutral/Mixed):**
+
+| Method | Macro Precision | Macro Recall | Macro F1 |
+|---|---|---|---|
+| VADER | 0.339 | 0.373 | 0.275 |
+| TF-IDF + LogReg (CV) | 0.429 | 0.453 | 0.439 |
+| LLM zero-shot | 0.660 | 0.650 | 0.652 |
+
+**The clearest single result in this whole project shows up in VADER's per-class breakdown.** On the Positive class:
+
+- Precision: **0.30** — of everything VADER called Positive, only 30% actually was
+- Recall: **0.94** — of everything that actually was Positive, VADER caught 94% of it
+
+That combination is the fingerprint of a tool that just calls almost everything Positive. It "catches" nearly every true Positive comment for the trivial reason that it's labeling most of the dataset Positive regardless of content, not because it understands sentiment. Compare that to Neutral, where VADER flips the pattern entirely: 0.68 precision but only 0.16 recall, it rarely calls something Neutral, but when it does, it's usually right, because Neutral comments are the ones with the least emotionally-loaded language for its lexicon to latch onto.
+
+**Mixed collapses to zero for both non-LLM methods.** VADER and the trained LogReg model both scored 0.00 precision, recall, and F1 on Mixed, neither correctly identified a single one of the 23 Mixed comments. This isn't a fluke, it's a direct consequence of Mixed being both the rarest class and the conceptually hardest one (a single scalar sentiment score, or a bag-of-words model with only 23 training examples, has no real mechanism for representing "both positive and negative at once"). The LLM approach was the only one to get any traction here at all (0.33 precision, 0.30 recall), still weak, but not zero.
+
+**Because Mixed is unlearnable at this sample size, here's the same breakdown as a 3-class problem (Positive/Negative/Neutral only):**
+
+| Method | Macro Precision | Macro Recall | Macro F1 |
+|---|---|---|---|
+| VADER | 0.489 | 0.498 | 0.387 |
+| TF-IDF + LogReg (CV) | 0.657 | 0.604 | 0.626 |
+| LLM zero-shot | 0.833 | 0.765 | 0.796 |
+
+Every method's macro F1 improves substantially once Mixed is set aside, since Mixed was dragging every average down to zero regardless of how well a method handled the other three classes. The relative ranking between methods doesn't change, VADER still trails badly, LogReg still lands in the middle, LLM zero-shot is still ahead, but this framing is a fairer test of what each method can actually do on a class it has enough data to learn.
 
 ---
 
