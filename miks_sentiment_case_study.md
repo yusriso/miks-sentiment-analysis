@@ -74,7 +74,7 @@ A real, trainable classifier learned from the 236 labeled comments. Given how sm
 
 **Results:**
 - **56.4% accuracy** (62.4% excluding Mixed)
-- **0 of 23 Mixed comments correctly classified.** With only 23 training examples split across 5 folds, the model never saw enough Mixed examples to learn the pattern. This isn't a bug, it's an honest small-data limitation.
+- **0 of 23 Mixed comments correctly classified.** With only 23 training examples split across 5 folds, the model never saw enough Mixed examples to learn the pattern. This is a limitation of a smaller dataset especially when dealing with the few mixed cases.
 - Learned features were informative for Negative (top weighted words: "boring," "ass," "absolute," "showmatch") but mostly function words for Positive ("with," "and," "my," "his"), a sign the model is partly picking up something closer to sentence style than content for that class.
 
 This is the tier of result I'd trust for a real production use case with a bit more labeled data behind it, it's inspectable, reproducible, and improves in a predictable way as more labels get added.
