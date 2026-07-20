@@ -20,7 +20,7 @@ The takeaway: a general-purpose, off-the-shelf sentiment tool is close to useles
 
 ## Motivation
 
-Sentiment analysis projects often stop at "run VADER, report percent positive/negative." That's fine for generic text, but gaming communities write in a register that's dense with slang, sarcasm, and domain-specific shorthand ("mid," "ass," "trash," "diks") that a general-purpose lexicon was never built to understand. I wanted to actually measure how much that gap matters, rather than assume it.
+Sentiment analysis projects often stop at "run VADER, report percent positive/negative." That's fine for generic text, but gaming communities write in a register that's dense with slang, sarcasm, and domain-specific shorthand ("mid," "ass," "trash,") that a general-purpose lexicon was never built to understand. I wanted to actually measure how much that gap matters, rather than assume it.
 
 Miks turned out to be a good test case: he's a genuinely controversial agent (the community is split on whether he's "balanced but boring" or "underpowered", and the sentiment isn't a simple positive/negative binary), and there's a lot of organic discussion to pull from across multiple platforms and a few months of time.
 
